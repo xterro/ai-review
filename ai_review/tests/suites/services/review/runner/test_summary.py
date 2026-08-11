@@ -1,5 +1,7 @@
 import pytest
 
+from ai_review.config import settings
+from ai_review.libs.config.review import ReviewMode
 from ai_review.services.review.internal.summary.schema import SummaryCommentSchema
 from ai_review.services.review.runner.summary import SummaryReviewRunner
 from ai_review.services.vcs.types import ReviewCommentSchema
@@ -93,3 +95,46 @@ async def test_run_skips_when_empty_summary_from_llm(
 
     assert any(call[0] == "ask" for call in fake_review_direct_llm_gateway.calls)
     assert not any(call[0] == "process_summary_comment" for call in fake_review_comment_gateway.calls)
+
+
+@pytest.mark.asyncio
+async def test_run_custom_text_mode(
+        summary_review_runner: SummaryReviewRunner,
+        fake_vcs_client: FakeVCSClient,
+        fake_diff_service: FakeDiffService,
+        fake_prompt_service: FakePromptService,
+        fake_review_comment_gateway: FakeReviewCommentGateway,
+        fake_review_direct_llm_gateway: FakeReviewDirectLLMGateway,
+        monkeypatch: pytest.MonkeyPatch,
+):
+    """Should use build_custom_text_request and skip diff rendering in CUSTOM_TEXT mode."""
+    monkeypatch.setattr(settings.review, "mode", ReviewMode.CUSTOM_TEXT)
+    monkeypatch.setattr(settings.review, "custom_text", "Review security issues")
+    fake_review_comment_gateway.responses["get_summary_comments"] = []
+
+    await summary_review_runner.run()
+
+    assert not any(call[0] == "render_files" for call in fake_diff_service.calls)
+    assert any(call[0] == "build_custom_text_request" for call in fake_prompt_service.calls)
+    assert any(call[0] == "ask" for call in fake_review_direct_llm_gateway.calls)
+    assert any(call[0] == "process_summary_comment" for call in fake_review_comment_gateway.calls)
+
+
+@pytest.mark.asyncio
+async def test_run_custom_text_mode_skips_when_empty(
+        summary_review_runner: SummaryReviewRunner,
+        fake_vcs_client: FakeVCSClient,
+        fake_review_direct_llm_gateway: FakeReviewDirectLLMGateway,
+        monkeypatch: pytest.MonkeyPatch,
+):
+    """Should skip when CUSTOM_TEXT mode is set but custom_text is empty."""
+    monkeypatch.setattr(settings.review, "mode", ReviewMode.CUSTOM_TEXT)
+    monkeypatch.setattr(settings.review, "custom_text", "")
+    fake_review_comment_gateway_responses = fake_review_comment_gateway.responses
+    fake_review_comment_gateway_responses["get_summary_comments"] = []
+
+    await summary_review_runner.run()
+
+    vcs_calls = [call[0] for call in fake_vcs_client.calls]
+    assert vcs_calls == []
+    assert not any(call[0] == "ask" for call in fake_review_direct_llm_gateway.calls)

@@ -42,6 +42,10 @@ class FakePromptService(PromptServiceProtocol):
         self.calls.append(("build_summary_request", {"diffs": diffs, "context": context}))
         return "SUMMARY_PROMPT"
 
+    def build_custom_text_request(self, custom_text: str, context: PromptContextSchema) -> str:
+        self.calls.append(("build_custom_text_request", {"custom_text": custom_text, "context": context}))
+        return "CUSTOM_TEXT_PROMPT"
+
     def build_context_request(self, diffs: list[DiffFileSchema], context: PromptContextSchema) -> str:
         self.calls.append(("build_context_request", {"diffs": diffs, "context": context}))
         return "CONTEXT_PROMPT"

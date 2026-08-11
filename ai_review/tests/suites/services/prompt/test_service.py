@@ -49,6 +49,20 @@ def test_build_summary_request_empty_list(fake_prompt_context: PromptContextSche
 
 
 @pytest.mark.usefixtures("fake_prompts")
+def test_build_custom_text_request_includes_prompt_and_custom_text(
+        fake_prompt_context: PromptContextSchema,
+) -> None:
+    """Should produce summary prompt + ##Custom text section with user text."""
+    result = PromptService.build_custom_text_request("Review security issues", fake_prompt_context)
+
+    assert "GLOBAL_SUMMARY" in result
+    assert "SUMMARY_PROMPT" in result
+    assert "##Custom text" in result
+    assert "Review security issues" in result
+    assert "## Changes" not in result
+
+
+@pytest.mark.usefixtures("fake_prompts")
 def test_build_context_request_includes_prompts_and_diffs(fake_prompt_context: PromptContextSchema) -> None:
     diffs = [
         DiffFileSchema(file="a.py", diff="+ foo"),

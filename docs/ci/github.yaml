@@ -260,6 +260,7 @@ jobs:
           #   ONLY_ADDED_WITH_CONTEXT
           #   ONLY_REMOVED_WITH_CONTEXT
           #   ADDED_AND_REMOVED_WITH_CONTEXT
+          #   CUSTOM_TEXT
           REVIEW__MODE: "FULL_FILE_DIFF"
 
           # Dry-run mode:
@@ -295,6 +296,15 @@ jobs:
           # When disabled, failed inline comments are logged and skipped.
           # Default: true
           REVIEW__INLINE_COMMENT_FALLBACK: "true"
+
+          # Custom text (only used when REVIEW__MODE is CUSTOM_TEXT).
+          # The text is appended to the summary prompt and sent to the LLM
+          # without any diff content. This lets you ask the AI specific
+          # questions about the pull request.
+          # Example:
+          #   REVIEW__MODE: "CUSTOM_TEXT"
+          #   REVIEW__CUSTOM_TEXT: "Review security issues in this PR."
+          # REVIEW__CUSTOM_TEXT: ""
 
           # ===============================
           # Logger (optional)

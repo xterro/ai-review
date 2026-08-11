@@ -64,6 +64,15 @@ class PromptService(PromptServiceProtocol):
         )
 
     @classmethod
+    def build_custom_text_request(cls, custom_text: str, context: PromptContextSchema) -> str:
+        prompt = cls.prepare_prompt(settings.prompt.load_summary(), context)
+        return (
+            f"{prompt}\n\n"
+            f"## Custom text\n\n"
+            f"{custom_text}"
+        )
+
+    @classmethod
     def build_context_request(cls, diffs: list[DiffFileSchema], context: PromptContextSchema) -> str:
         prompt = cls.prepare_prompt(settings.prompt.load_context(), context)
         changes = format_files(diffs)

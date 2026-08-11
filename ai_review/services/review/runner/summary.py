@@ -1,3 +1,5 @@
+from ai_review.libs.config.review import ReviewMode
+from ai_review.config import Settings, get_settings
 from ai_review.libs.logger import get_logger
 from ai_review.services.cost.types import CostServiceProtocol
 from ai_review.services.diff.types import DiffServiceProtocol
@@ -46,22 +48,39 @@ class SummaryReviewRunner(ReviewRunnerProtocol):
             return
 
         review_info = await self.vcs.get_review_info()
-        changed_files = self.policy.apply_for_files(review_info.changed_files)
-        if not changed_files:
-            logger.info("No files to review for summary")
+        prompt_context = build_prompt_context_from_review_info(review_info)
+        prompt_system = self.prompt.build_system_summary_request(prompt_context)
+        prompt = ""
+
+        # CUSTOM_TEXT mode: skip file processing, send only prompt + custom text
+        if get_settings().review.mode == ReviewMode.CUSTOM_TEXT:
+            if not get_settings().review.custom_text:
+                logger.warning("CUSTOM_TEXT mode enabled but REVIEW__CUSTOM_TEXT is empty, skipping")
+                return
+
+            logger.info("Starting CUSTOM_TEXT summary review")
+            prompt = self.prompt.build_custom_text_request(get_settings().review.custom_text, prompt_context)
+        else:
+            changed_files = self.policy.apply_for_files(review_info.changed_files)
+            if not changed_files:
+                logger.info("No files to review for summary")
+                return
+
+            logger.info(f"Starting summary review: {len(changed_files)} files changed")
+
+            rendered_files = self.diff.render_files(
+                git=self.git,
+                files=changed_files,
+                base_sha=review_info.base_sha,
+                head_sha=review_info.head_sha,
+            )
+            prompt = self.prompt.build_summary_request(rendered_files, prompt_context)
+
+        if not prompt.strip():
+            logger.warning("Summary prompt was empty, skipping")
             return
 
-        logger.info(f"Starting summary review: {len(changed_files)} files changed")
-
-        rendered_files = self.diff.render_files(
-            git=self.git,
-            files=changed_files,
-            base_sha=review_info.base_sha,
-            head_sha=review_info.head_sha,
-        )
-        prompt_context = build_prompt_context_from_review_info(review_info)
-        prompt = self.prompt.build_summary_request(rendered_files, prompt_context)
-        prompt_system = self.prompt.build_system_summary_request(prompt_context)
+        logger.info(f"Sending PROMPT to LLM: {prompt}")    
         prompt_result = await self.review_llm_gateway.ask(prompt, prompt_system)
 
         summary = self.summary_comment.parse_model_output(prompt_result)

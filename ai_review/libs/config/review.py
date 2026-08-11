@@ -16,6 +16,8 @@ class ReviewMode(StrEnum):
     ONLY_REMOVED_WITH_CONTEXT = "ONLY_REMOVED_WITH_CONTEXT"
     ADDED_AND_REMOVED_WITH_CONTEXT = "ADDED_AND_REMOVED_WITH_CONTEXT"
 
+    CUSTOM_TEXT = "CUSTOM_TEXT"
+
 
 class ReviewConfig(BaseModel):
     mode: ReviewMode = ReviewMode.FULL_FILE_DIFF
@@ -34,3 +36,4 @@ class ReviewConfig(BaseModel):
     max_inline_comments: int | None = None
     max_context_comments: int | None = None
     inline_comment_fallback: bool = True
+    custom_text: str = ""

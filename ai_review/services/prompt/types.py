@@ -25,6 +25,9 @@ class PromptServiceProtocol(Protocol):
     def build_summary_request(self, diffs: list[DiffFileSchema], context: PromptContextSchema) -> str:
         ...
 
+    def build_custom_text_request(self, custom_text: str, context: PromptContextSchema) -> str:
+        ...
+
     def build_context_request(self, diffs: list[DiffFileSchema], context: PromptContextSchema) -> str:
         ...
 
