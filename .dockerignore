@@ -1,0 +1,44 @@
+# Git
+.git
+.gitignore
+
+# Виртуальные окружения
+.venv
+venv/
+venv.bak/
+env/
+ENV/
+
+# Кэш и артефакты сборки
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.cache
+.coverage
+.coverage.*
+htmlcov/
+
+# Документация и CI (не нужны в рантайм-образе)
+docs/
+.github/
+ci/
+artifacts/
+action.yml
+
+# Конфиги и файлы, не нужные в рантайме
+.ai-review.yaml
+.ai-review.json
+conftest.py
+LICENSE
+README.md
+Dockerfile
+.dockerignore
+
+# IDE
+.idea/
+.vscode/
+.DS_Store
